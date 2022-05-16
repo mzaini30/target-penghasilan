@@ -6,6 +6,15 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
   <link rel="stylesheet" href="lib/bootstrap.css">
+  <style type="text/css" media="all">
+    * {
+      word-wrap: break-word;
+    }
+    .list-penghasilan {
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
 </head>
 <body>
   <div class="app">
@@ -17,31 +26,62 @@
           <input v-model="target" required="" type="tel" class="form-control">
         </div>
         <div class="mb-3">
-          <input class="btn btn-success" type="submit" value="Save modify">
+          <input class="btn btn-success" type="submit" value="Save changes">
         </div>
         <div v-if="targetBerhasil" class="mb-3">
-          <div class="alert alert-success">Success</div>
+          <div class="alert alert-success">Saved</div>
         </div>
       </form>
       
       <hr />
       
-      <p><button class="btn btn-primary">New source</button></p>
+      <p><button @click="isTambahSource = !isTambahSource" class="btn btn-primary">New source</button></p>
+      
+      <div v-if="isTambahSource" class="card mb-3">
+        <div class="card-body">
+          <form @submit.prevent="tambahSource" action="">
+            <div class="mb-3">
+              <input placeholder="Write here the title" required="" v-model="judulBaru" type="text" class="form-control">
+            </div>
+            <input class="btn btn-success" type="submit" name="" id="" value="Add" />
+          </form>
+        </div>
+      </div>
+      
+      <div class="list-group mb-3">
+        <a 
+          v-for="x in data.sort((a, b) => b.penghasilan - a.penghasilan)" 
+          :href="'detail.html?id=' + x.id" 
+          class="list-group-item list-group-item-action list-penghasilan"
+          :class="Math.floor(x.penghasilan / (sekarang() - x.start + 1)) < target ? 'list-group-item-warning' : null"
+        >
+          <span>{{ x.nama }}</span>
+          <span>{{ Math.floor(x.penghasilan / (sekarang() - x.start + 1)).toLocaleString() }}</span>
+        </a>
+      </div>
       
     </div>
   </div>
   
   <script src="lib/vue.js" type="text/javascript" charset="utf-8"></script>
+  <script src="lib/localforage.js" type="text/javascript" charset="utf-8"></script>
   <script type="text/javascript" charset="utf-8">
+    function json(x){
+      return JSON.parse(JSON.stringify(x))
+    }  
     Vue.createApp({
       data(){
         return {
           target: 0,
-          targetBerhasil: false
+          targetBerhasil: false,
+          isTambahSource: false,
+          data: [], // id (acak), nama, start (bulan dalam bentuk number), penghasilan, detail (id, tanggal dd-mm-yyyy, penghasilan; terbaru di atas)
+          judulBaru: ""
         }
       },
       mounted(){
         this.cekTarget()
+        this.dapatkanSource()
       },
       methods: {
         cekTarget(){
@@ -53,6 +93,35 @@
           localStorage.target = this.target
           this.targetBerhasil = true
           setTimeout(() => this.targetBerhasil = false, 3000)
+        },
+        sekarang(){
+          const detail = new Date().getTime()
+          
+          const menit = 60 * 1000
+          const jam = menit * 60
+          const hari = jam * 24
+          const bulan = hari * 30
+          
+          return Math.floor(detail / bulan)
+        },
+        async dapatkanSource(){
+          const datanya = await localforage.getItem("dataPenghasilan")
+          if (datanya){
+            this.data = datanya
+          }
+        },
+        tambahSource(){
+          const baru = {
+            id: Math.random(),
+            nama: this.judulBaru,
+            start: this.sekarang(),
+            penghasilan: 0,
+            detail: []
+          }
+          this.data = [...this.data, baru]
+          this.isTambahSource = false
+          this.judulBaru = ""
+          const simpan = localforage.setItem("dataPenghasilan", json(this.data))
         }
       }
     }).mount(".app")

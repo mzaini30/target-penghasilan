@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="lib/bootstrap.css" type="text/css" media="all" />
+  <style>
+    .kanan {
+      margin-right: .5rem;
+    }
+    .judul {
+      margin-bottom: .1rem;
+    }
+    .bawah {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="container mt-3">
+      <p class="judul">{{ dataSekarang.nama }}</p>
+      <h1>{{ (+dataSekarang.penghasilan).toLocaleString() }}</h1>
+      <p>
+        <button @click="isBaru = !isBaru" class="kanan btn btn-success">New income</button>
+        <button @click="isDelete = true" class="btn btn-danger">Delete</button>
+      </p>
+      
+      <div v-if="isBaru" class="card mb-3">
+        <div class="card-body">
+          <form @submit.prevent="tambah" action="">
+            <div class="mb-3">
+              <input required="" v-model="baru" placeholder="How much did you get?" type="tel" class="form-control">
+            </div>
+            <input class="btn btn-success" type="submit" name="" id="" value="Add" />
+          </form>
+        </div>
+      </div>
+      
+      <div v-if="isDelete" class="card mb-3">
+        <div class="card-body">
+          <p>Delete?</p>
+          <button @click="hapus" class="kanan btn btn-warning">Yes</button>
+          <button @click="isDelete = false" class="btn btn-info">No</button>
+        </div>
+      </div>
+      
+      <table class="mb-3 table table-bordered">
+        <tbody>
+          <tr v-for="x in dataSekarang.detail">
+            <td class="text-center">
+              <span @click="mauHapus(x.id, x.penghasilan)">&times;</span>
+            </td>
+            <td>{{ x.tanggal }}</td>
+            <td>{{ (+x.penghasilan).toLocaleString() }}</td>
+          </tr>
+        </tbody>
+      </table>
+      
+    </div>
+    
+    <div v-if="isHapusItem" class="bawah">
+      <div class="container mb-3">
+        <div class="card">
+          <div class="card-body">
+            <p>Delete?</p>
+            <button @click="hapusItem" class="kanan btn btn-danger">Yes</button>
+            <button @click="isHapusItem = false" class="btn btn-info">No</button>
+          </div>
+        </div>
+      </div>
+    </div>
+      
+  </div>
+  
+  <script src="lib/vue.js" type="text/javascript" charset="utf-8"></script>
+  <script src="lib/localforage.js" type="text/javascript" charset="utf-8"></script>
+  <script>
+    function json(x){
+      return JSON.parse(JSON.stringify(x))
+    }
+  </script>
+  <script>
+    Vue.createApp({
+      data(){
+        return {
+          data: [],
+          id: "",
+          baru: "",
+          dataSekarang: [],
+          isDelete: false,
+          isBaru: false,
+          isHapusItem: false,
+          itemHapus: "",
+          itemHapusPenghasilan: ""
+        }
+      },
+      mounted(){
+        this.cekId()
+        this.ambil()
+      },
+      methods: {
+        async ambil(){
+          const data = await localforage.getItem("dataPenghasilan")
+          this.data = data
+          
+          this.dataSekarang = this.data.filter(x => x.id == this.id)[0]
+        },
+        mauHapus(id, penghasilan){
+          this.isHapusItem = true
+          this.itemHapus = id
+          this.itemHapusPenghasilan = penghasilan
+        },
+        hapusItem(){
+          this.dataSekarang.detail = this.dataSekarang.detail.filter(x => x.id != this.itemHapus)
+          this.dataSekarang.penghasilan -= this.itemHapusPenghasilan
+          localforage.setItem("dataPenghasilan", json(this.data))
+          
+          this.isHapusItem = false
+        },
+        tambah(){
+          const nilaiBaru = {
+            id: Math.random(),
+            tanggal: this.tanggal(),
+            penghasilan: this.baru
+          }
+          this.dataSekarang.detail = [nilaiBaru, ...this.dataSekarang.detail]
+          this.dataSekarang.penghasilan += +this.baru
+          localforage.setItem("dataPenghasilan", json(this.data))
+          
+          this.baru = ""
+          this.isBaru = false
+        },
+        tanggal(){
+          const tanggalan = new Date
+
+          const tanggal = ("" + tanggalan.getDate()).padStart(2, "0")
+          const bulan = ("" + (tanggalan.getMonth() + 1)).padStart(2, "0")
+          const tahun = tanggalan.getFullYear()
+          
+          return `${tanggal}-${bulan}-${tahun}`
+        },
+        async hapus(){
+          let data = await localforage.getItem("dataPenghasilan")
+          data = data.filter(x => x.id != this.id)
+          const simpanLagi = await localforage.setItem("dataPenghasilan", data)
+          if (simpanLagi){
+            location.href = "index.html"
+          }
+        },
+        cekId(){
+          let link = location.search
+          link = new URLSearchParams(link).get("id")
+          this.id = link
+        }
+      }
+    }).mount(".app")
+  </script>
+</body>
+</html>
