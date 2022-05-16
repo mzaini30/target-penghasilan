@@ -26,6 +26,8 @@
       
       <hr />
       
+      <p><button class="btn btn-primary">New source</button></p>
+      
     </div>
   </div>
   
@@ -37,6 +39,9 @@
           target: 0,
           targetBerhasil: false
         }
+      },
+      mounted(){
+        this.cekTarget()
       },
       methods: {
         cekTarget(){
