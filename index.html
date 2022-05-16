@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <link rel="stylesheet" href="lib/bootstrap.css">
+</head>
+<body>
+  <div class="app">
+    <div class="container mt-3">
+      
+      <form @submit.prevent="simpanTarget" action="">
+        <div class="mb-3">
+          <label>Monthly Target</label>
+          <input v-model="target" required="" type="tel" class="form-control">
+        </div>
+        <div class="mb-3">
+          <input class="btn btn-success" type="submit" value="Save modify">
+        </div>
+        <div v-if="targetBerhasil" class="mb-3">
+          <div class="alert alert-success">Success</div>
+        </div>
+      </form>
+      
+      <hr />
+      
+    </div>
+  </div>
+  
+  <script src="lib/vue.js" type="text/javascript" charset="utf-8"></script>
+  <script type="text/javascript" charset="utf-8">
+    Vue.createApp({
+      data(){
+        return {
+          target: 0,
+          targetBerhasil: false
+        }
+      },
+      methods: {
+        cekTarget(){
+          if (localStorage.target){
+            this.target = localStorage.target
+          }
+        },
+        simpanTarget(){
+          localStorage.target = this.target
+          this.targetBerhasil = true
+          setTimeout(() => this.targetBerhasil = false, 3000)
+        }
+      }
+    }).mount(".app")
+  </script>
+</body>
+</html>
